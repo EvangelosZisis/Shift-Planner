@@ -13,4 +13,6 @@ router.put('/markIncomplete', planController.markIncomplete)
 
 router.delete('/deletePerson', planController.deletePerson)
 
+router.post('/createdPlan', planController.createdPlan)
+
 module.exports = router

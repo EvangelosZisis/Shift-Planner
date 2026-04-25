@@ -2,12 +2,13 @@ const Persons = require('../models/Persons')
 const validator = require('validator')
 
 
+
 module.exports = {
     getPlan: async (req,res)=>{
         console.log(req.user)
         try{
-            const personName = await Persons.find({userId:req.user.id})
-            res.render('plan.ejs', {plan: personName, user: req.user})
+            const personName = await Persons.find({userId:req.user.id})           
+            res.render('plan.ejs', {plan: personName, user: req.user, req: req})
             
             
         }catch(err){
@@ -15,7 +16,7 @@ module.exports = {
         }
     },
     
-    addPerson: async (req, res)=>{
+    addPerson: async (req, res)=>{        
         const validationErrors = []
         if (!validator.isInt(req.body.daysOfWork, { min: 1, max: 31 })) validationErrors.push({ msg: 'Please enter a valid number of days.' })
         if (validator.isEmpty(req.body.personName)) validationErrors.push({ msg: 'Please enter a name.' })
@@ -24,17 +25,58 @@ module.exports = {
             return res.redirect('/plan')
         }
         try{
+            req.session.myData = "value";
             await Persons.create({personName: req.body.personName, userId: req.user.id, daysOfWork: req.body.daysOfWork})
-            console.log('Todo has been added!')
             res.redirect('/plan')
         }catch(err){
             console.log(err)
         }
-    }
+    },
     
+
+    //create the code that creates the plan
+
+    createdPlan: async (req,res)=>{
+        console.log(req.user)
+        try{
+            
+            const personName = await Persons.find({userId:req.user.id})           
+            res.render('createdPlan.ejs', {plan: personName, user: req.user, req: req})
+            
+            
+        }catch(err){
+            console.log(err)
+        }
+    },
+
+    /*savePerson:async (req, res) => {
+        const checked = req.body.days || [];
+
+        // make sure it's always an array
+        const checkedArray = Array.isArray(checked) ? checked : [checked];
+
+        // create 31-length boolean array
+        const availableDays = new Array(31).fill(false);
+
+        checkedArray.forEach(index => {
+            availableDays[parseInt(index)] = true;
+        });
+
+        const user = new User({ availableDays });
+
+        await user.save();
+
+        res.send('Saved');
+    }, */
+
+
+
+
+
+
     
         
-        ,
+        
     markComplete: async (req, res)=>{
         try{
             await Persons.findOneAndUpdate({_id:req.body.todoIdFromJSFile},{

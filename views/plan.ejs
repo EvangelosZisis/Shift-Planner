@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=delete" />   
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.css">    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <title>Document</title>
 </head>
@@ -19,7 +19,7 @@
         <h2 class="Welcome">Welcome <%= user.userName %> <%= user.displayName %></h2>
         <nav>
             <ul class="nav_links">
-                <li ><a href="/Logout" class="logout">Logout</a></li>                
+                <li><a href="/Logout" class="logout">Logout</a></li>                
             </ul>
         </nav>
     </header>  
@@ -40,78 +40,62 @@
     </form>
 
     <table>
-        <tr> <!-- Table Header -->
+        <% if (plan.length > 0) { %>
+        <tr> 
             <th>Name</th>
-            <th>1</th>
-            <th>2</th>
-            <th>3</th>
-            <th>4</th>
-            <th>5</th>
-            <th>6</th>
-            <th>7</th>
-            <th>8</th>
-            <th>9</th>
-            <th>10</th>
-            <th>11</th>
-            <th>12</th>
-            <th>13</th>
-            <th>14</th>
-            <th>15</th>
-            <th>16</th>
-            <th>17</th>
-            <th>18</th>
-            <th>19</th>
-            <th>20</th>
-            <th>21</th>
-            <th>22</th>
-            <th>23</th>
-            <th>24</th>
-            <th>25</th>
-            <th>26</th>
-            <th>27</th>
-            <th>28</th>
-            <th>29</th>
-            <th>30</th>
-            <th>31</th>
+            <% for (let i = 1; i <= 31; i++) { %>
+            <td>
+                <%= i %>
+            </td>
+            <% } %>
         </tr>
+            <% } else { %>
+                <td id="noPeople">No people added yet</td>
+            <% } %>
+
+        <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const checkboxes = document.querySelectorAll(".persist-checkbox");
+
+            checkboxes.forEach(cb => {
+                const personId = cb.dataset.person;
+                const dayIndex = parseInt(cb.dataset.day);
+
+        // Load existing data or create empty array
+                let data = JSON.parse(localStorage.getItem("person-" + personId)) || Array(31).fill(false);
+
+        // Set checkbox state
+                cb.checked = data[dayIndex];
+
+        // Save on change
+                cb.addEventListener("change", () => {
+                    let updatedData = JSON.parse(localStorage.getItem("person-" + personId)) || Array(31).fill(false);
+
+                    updatedData[dayIndex] = cb.checked;
+
+                    localStorage.setItem("person-" + personId, JSON.stringify(updatedData));
+                });
+            });
+        });
+        </script>
+
         <% plan.forEach( el => { %>
         <tr class="personPlan" data-id='<%=el._id%>'>
             <td class="myTd"><span id="del" class='del material-symbols-outlined'>delete</span><%= el.personName %></td>
-            <td><input type="checkbox" id="one" name="one" value="true"></td>
-            <td><input type="checkbox" id="two" name="two" value="true"></td>
-            <td><input type="checkbox" id="three" name="three" value="true"></td>
-            <td><input type="checkbox" id="four" name="four" value="true"></td>
-            <td><input type="checkbox" id="five" name="five" value="true"></td>
-            <td><input type="checkbox" id="six" name="six" value="true"></td>
-            <td><input type="checkbox" id="seven" name="seven" value="true"></td>
-            <td><input type="checkbox" id="eight" name="eight" value="true"></td>
-            <td><input type="checkbox" id="nine" name="nine" value="true"></td>
-            <td><input type="checkbox" id="ten" name="ten" value="true"></td>
-            <td><input type="checkbox" id="eleven" name="eleven" value="true"></td>
-            <td><input type="checkbox" id="twelve" name="twelve" value="true"></td>
-            <td><input type="checkbox" id="thirteen" name="thirteen" value="true"></td>
-            <td><input type="checkbox" id="fourteen" name="fourteen" value="true"></td>
-            <td><input type="checkbox" id="fifteen" name="fifteen" value="true"></td>
-            <td><input type="checkbox" id="sixteen" name="sixteen" value="true"></td>
-            <td><input type="checkbox" id="seventeen" name="seventeen" value="true"></td>
-            <td><input type="checkbox" id="eighteen" name="eighteen" value="true"></td>
-            <td><input type="checkbox" id="nineteen" name="nineteen" value="true"></td>
-            <td><input type="checkbox" id="twenty" name="twenty" value="true"></td>
-            <td><input type="checkbox" id="twentyone" name="twentyone" value="true"></td>
-            <td><input type="checkbox" id="twentytwo" name="twentytwo" value="true"></td>
-            <td><input type="checkbox" id="twentythree" name="twentythree" value="true"></td>
-            <td><input type="checkbox" id="twentyfour" name="twentyfour" value="true"></td>
-            <td><input type="checkbox" id="twentyfive" name="twentyfive" value="true"></td>
-            <td><input type="checkbox" id="twentysix" name="twentysix" value="true"></td>
-            <td><input type="checkbox" id="twentyseven" name="twentyseven" value="true"></td>
-            <td><input type="checkbox" id="twentyeight" name="twentyeight" value="true"></td>
-            <td><input type="checkbox" id="twentynine" name="twentynine" value="true"></td>
-            <td><input type="checkbox" id="thirty" name="thirty" value="true"></td>
-            <td><input type="checkbox" id="thirtyone" name="thirtyone" value="true"></td>
+            <% for (let i = 0; i < 31; i++) { %>
+            <td>
+                <input type="checkbox" class="persist-checkbox" data-person="<%= el._id %>" data-day="<%= i %>">
+            </td>
+            <% } %>
         </tr> 
         <% }) %>    
     </table>
 
+    
+    
+    <div>
+        <button href="/plan/createdPlan" class="waves-effect waves-light btn-large">Create my plan</button>
+    </div>
 
 
 

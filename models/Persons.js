@@ -11,9 +11,7 @@ const PersonsSchema = new mongoose.Schema({
     daysOfWork: {type: Number,
     required: true
     },
-    
-
-  
+    availableDays: [Boolean], 
   
 })
 
