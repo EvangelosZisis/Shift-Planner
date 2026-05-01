@@ -82,9 +82,9 @@
         <% plan.forEach( el => { %>
         <tr class="personPlan" data-id='<%=el._id%>'>
             <td class="myTd"><span id="del" class='del material-symbols-outlined'>delete</span><%= el.personName %></td>
-            <% for (let i = 0; i < 31; i++) { %>
+            <% for (let i = 1; i <= 31; i++) { %>
             <td>
-                <input type="checkbox" class="persist-checkbox" data-person="<%= el._id %>" data-day="<%= i %>">
+                <input type="checkbox" class="persist-checkbox" data-person="<%= el._id %>" data-day="<%= i %>" value ="<%= i %>">
             </td>
             <% } %>
         </tr> 

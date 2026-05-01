@@ -49,56 +49,6 @@ module.exports = {
         }
     },
 
-    /*savePerson:async (req, res) => {
-        const checked = req.body.days || [];
-
-        // make sure it's always an array
-        const checkedArray = Array.isArray(checked) ? checked : [checked];
-
-        // create 31-length boolean array
-        const availableDays = new Array(31).fill(false);
-
-        checkedArray.forEach(index => {
-            availableDays[parseInt(index)] = true;
-        });
-
-        const user = new User({ availableDays });
-
-        await user.save();
-
-        res.send('Saved');
-    }, */
-
-
-
-
-
-
-    
-        
-        
-    markComplete: async (req, res)=>{
-        try{
-            await Persons.findOneAndUpdate({_id:req.body.todoIdFromJSFile},{
-                completed: true
-            })
-            console.log('Marked Complete')
-            res.json('Marked Complete')
-        }catch(err){
-            console.log(err)
-        }
-    },
-    markIncomplete: async (req, res)=>{
-        try{
-            await Persons.findOneAndUpdate({_id:req.body.todoIdFromJSFile},{
-                completed: false
-            })
-            console.log('Marked Incomplete')
-            res.json('Marked Incomplete')
-        }catch(err){
-            console.log(err)
-        }
-    },
     deletePerson: async (req, res)=>{
         console.log(req.body.personIdFromJSFile)
         try{
