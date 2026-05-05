@@ -27,7 +27,23 @@
 
 
     <form action="/plan/addPerson" method='POST' class="personForm">
+
+        <div class="monthPicker">
+                <label for="month">Month</label>
+                <select id="month" name="month">
+                    <% monthNames.forEach((monthName, index) => { %>
+                        <option value="<%= index + 1 %>" <%= selectedMonth === index + 1 ? 'selected' : '' %>><%= monthName %></option>
+                    <% }) %>
+                </select>
+
+                <label for="year">Year</label>
+                <input type="number" id="year" name="year" value="<%= selectedYear %>" min="1900" max="3000">
+
+                <label for="offDays">Include Off Days</label>
+                <input type="checkbox" id="offDays" name="offDays">
+
         <h2>Please enter Person's information</h2>
+
         <h5 class="daysError">
         <% if (locals.messages.errors) { %>
             <% messages.errors.forEach( el => { %>
@@ -39,68 +55,190 @@
         <button name="addPerson" value="value" type="submit">Add Person</button>
     </form>
 
-    <table>
-        <% if (plan.length > 0) { %>
-        <tr> 
-            <th>Name</th>
-            <% for (let i = 1; i <= 31; i++) { %>
-            <td>
-                <%= i %>
-            </td>
-            <% } %>
-        </tr>
-            <% } else { %>
-                <td id="noPeople">No people added yet</td>
-            <% } %>
-
-        <script>
+    <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const checkboxes = document.querySelectorAll(".persist-checkbox");
+            const monthSelect = document.getElementById("month");
+            const yearInput = document.getElementById("year");
+            const offDaysCheckbox = document.getElementById("offDays");
+            const getOffDaysStorageKey = () => "include-off-days-" + monthSelect.value + "-" + yearInput.value;
+            const loadOffDays = () => {
+                offDaysCheckbox.checked = localStorage.getItem(getOffDaysStorageKey()) === "true";
+            };
 
-            checkboxes.forEach(cb => {
-                const personId = cb.dataset.person;
-                const dayIndex = parseInt(cb.dataset.day);
-
-        // Load existing data or create empty array
-                let data = JSON.parse(localStorage.getItem("person-" + personId)) || Array(31).fill(false);
-
-        // Set checkbox state
-                cb.checked = data[dayIndex];
-
-        // Save on change
-                cb.addEventListener("change", () => {
-                    let updatedData = JSON.parse(localStorage.getItem("person-" + personId)) || Array(31).fill(false);
-
-                    updatedData[dayIndex] = cb.checked;
-
-                    localStorage.setItem("person-" + personId, JSON.stringify(updatedData));
-                });
+            loadOffDays();
+            monthSelect.addEventListener("change", loadOffDays);
+            yearInput.addEventListener("change", loadOffDays);
+            offDaysCheckbox.addEventListener("change", () => {
+                localStorage.setItem(getOffDaysStorageKey(), offDaysCheckbox.checked);
             });
         });
+    </script>
+
+    <% if (plan.length > 0) { %>
+        <form action="/plan/createdPlan" method="POST">
+            <input type="hidden" id="planMonth" name="month" value="<%= selectedMonth %>">
+            <input type="hidden" id="planYear" name="year" value="<%= selectedYear %>">
+            <input type="hidden" id="planOffDays" name="offDays" value="">
+
+
+            <table>
+            <tr>
+                <th>Name</th>
+                <% for (let i = 1; i <= daysInMonth; i++) { %>
+                <td class="<%= [0, 6].includes(new Date(selectedYear, selectedMonth - 1, i).getDay()) ? 'weekendDay' : '' %>">
+                    <%= i %>
+                </td>
+                <% } %>
+            </tr>
+
+
+            <% plan.forEach( el => { %>
+            <tr class="personPlan" data-id='<%=el._id%>'>
+                <td class="myTd"><span id="del" class='del material-symbols-outlined'>delete</span><%= el.personName %></td>
+                <% for (let i = 1; i <= daysInMonth; i++) { %>
+                <td class="<%= [0, 6].includes(new Date(selectedYear, selectedMonth - 1, i).getDay()) ? 'weekendDay' : '' %>">
+                    <input type="checkbox" name="unavailableDays[<%= el._id %>][]" class="persist-checkbox" data-person="<%= el._id %>" data-day="<%= i %>" value ="<%= i %>">
+                </td>
+                <% } %>
+            </tr>
+            <% }) %>
+            </table>
+
+            <div>
+                <button id="createMyPlan" type="submit" class="waves-effect waves-light btn-large">Create my plan</button>
+                <p id="createPlanStatus" class="daysError"></p>
+            </div>
+        </form>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const monthSelect = document.getElementById("month");
+                const yearInput = document.getElementById("year");
+                const planMonthInput = document.getElementById("planMonth");
+                const planYearInput = document.getElementById("planYear");
+                const offDaysCheckbox = document.getElementById("offDays");
+                const planOffDaysInput = document.getElementById("planOffDays");
+                const table = document.querySelector("form[action='/plan/createdPlan'] table");
+                const createMyPlanButton = document.getElementById("createMyPlan");
+                const createPlanStatus = document.getElementById("createPlanStatus");
+                const totalDaysOfWork = <%= plan.reduce((total, person) => total + Number(person.daysOfWork || 0), 0) %>;
+
+                const getDaysInMonth = () => new Date(parseInt(yearInput.value), parseInt(monthSelect.value), 0).getDate();
+                const isWeekend = day => [0, 6].includes(new Date(parseInt(yearInput.value), parseInt(monthSelect.value) - 1, day).getDay());
+                const getPlanDaysCount = () => {
+                    const daysInMonth = getDaysInMonth();
+
+                    if (offDaysCheckbox.checked) {
+                        return daysInMonth;
+                    }
+
+                    let weekdays = 0;
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        if (!isWeekend(day)) {
+                            weekdays++;
+                        }
+                    }
+
+                    return weekdays;
+                };
+                const getStorageKey = personId => "person-" + personId + "-" + monthSelect.value + "-" + yearInput.value;
+                const updateCreatePlanButton = () => {
+                    const planDaysCount = getPlanDaysCount();
+                    const canCreatePlan = totalDaysOfWork === planDaysCount;
+
+                    planOffDaysInput.value = offDaysCheckbox.checked ? "on" : "";
+
+                    createMyPlanButton.disabled = !canCreatePlan;
+                    createPlanStatus.textContent = canCreatePlan
+                        ? ""
+                        : "Total days of work must equal " + planDaysCount + ". Current total: " + totalDaysOfWork + ".";
+                };
+
+                const setupCheckbox = cb => {
+                    const personId = cb.dataset.person;
+                    const dayIndex = parseInt(cb.dataset.day);
+                    let data = JSON.parse(localStorage.getItem(getStorageKey(personId))) || Array(getDaysInMonth()).fill(false);
+
+                    cb.checked = data[dayIndex - 1] || false;
+
+                    cb.addEventListener("change", () => {
+                        let updatedData = JSON.parse(localStorage.getItem(getStorageKey(personId))) || Array(getDaysInMonth()).fill(false);
+
+                        updatedData[dayIndex - 1] = cb.checked;
+
+                        localStorage.setItem(getStorageKey(personId), JSON.stringify(updatedData));
+                    });
+                };
+
+                const setupCheckboxes = () => {
+                    const checkboxes = document.querySelectorAll(".persist-checkbox");
+                    checkboxes.forEach(setupCheckbox);
+                };
+
+                const updateDays = () => {
+                    const daysInMonth = getDaysInMonth();
+                    const headerRow = table.querySelector("tr");
+                    planMonthInput.value = monthSelect.value;
+                    planYearInput.value = yearInput.value;
+
+                    if (!headerRow) {
+                        return;
+                    }
+
+                    while (headerRow.children.length > 1) {
+                        headerRow.removeChild(headerRow.lastElementChild);
+                    }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayCell = document.createElement("td");
+                    dayCell.textContent = day;
+                    if (isWeekend(day)) {
+                        dayCell.classList.add("weekendDay");
+                    }
+                    headerRow.appendChild(dayCell);
+                }
+
+                    document.querySelectorAll(".personPlan").forEach(row => {
+                    const personId = row.dataset.id;
+
+                    while (row.children.length > 1) {
+                        row.removeChild(row.lastElementChild);
+                    }
+
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        const cell = document.createElement("td");
+                        const checkbox = document.createElement("input");
+
+                        if (isWeekend(day)) {
+                            cell.classList.add("weekendDay");
+                        }
+
+                        checkbox.type = "checkbox";
+                        checkbox.name = "unavailableDays[" + personId + "][]";
+                        checkbox.className = "persist-checkbox";
+                        checkbox.dataset.person = personId;
+                        checkbox.dataset.day = day;
+                        checkbox.value = day;
+
+                        cell.appendChild(checkbox);
+                        row.appendChild(cell);
+                    }
+                    });
+
+                    setupCheckboxes();
+                    updateCreatePlanButton();
+                };
+
+                setupCheckboxes();
+                updateCreatePlanButton();
+                monthSelect.addEventListener("change", updateDays);
+                yearInput.addEventListener("change", updateDays);
+                offDaysCheckbox.addEventListener("change", updateCreatePlanButton);
+            });
         </script>
-
-        <% plan.forEach( el => { %>
-        <tr class="personPlan" data-id='<%=el._id%>'>
-            <td class="myTd"><span id="del" class='del material-symbols-outlined'>delete</span><%= el.personName %></td>
-            <% for (let i = 1; i <= 31; i++) { %>
-            <td>
-                <input type="checkbox" class="persist-checkbox" data-person="<%= el._id %>" data-day="<%= i %>" value ="<%= i %>">
-            </td>
-            <% } %>
-        </tr> 
-        <% }) %>    
-    </table>
-
-    
-    
-    <div>
-        <button href="/plan/createdPlan" class="waves-effect waves-light btn-large">Create my plan</button>
-    </div>
-
-
-
-
-
+    <% } else { %>
+        <p id="noPeople">No people added yet</p>
+    <% } %>
     <script src="js/main.js"></script>
 </body>
 </html>

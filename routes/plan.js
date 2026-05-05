@@ -11,6 +11,4 @@ router.delete('/deletePerson', planController.deletePerson)
 
 router.post('/createdPlan', planController.createdPlan)
 
-router.post('/updateUnavailableDays', planController.updateUnavailableDays)
-
 module.exports = router

@@ -89,3 +89,22 @@ table {
     border-color: transparent;
 }
 
+.weekendDay {
+  background-color: #eeeeee;
+}
+
+#createMyPlan {
+  margin-top: 20px;
+}
+
+#createMyPlan{
+  padding: 10px;
+}
+
+.monthPicker{
+  margin: 20px 0px;
+}
+
+#personName{
+  margin: 20px 0px
+}

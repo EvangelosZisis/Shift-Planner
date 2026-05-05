@@ -14,10 +14,7 @@ const PersonsSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    unavailableDays: {
-        type: [Number],
-        default: []
-    }
+    
 })
 
 module.exports = mongoose.model('Persons', PersonsSchema)
