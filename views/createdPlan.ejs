@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=delete" />
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <title>Document</title>
+    <title>Created Plan | Shift Planner</title>
 </head>
 <body>
 
@@ -22,20 +22,116 @@
         </nav>
     </header>
 
-    <h2><%= monthName %> <%= selectedYear %></h2>
+    <main class="pageShell">
+        <section class="panel createdPlanPanel">
+            <div class="sectionHeader">                
+                <h2><%= monthName %> <%= selectedYear %></h2>
+             </div>
 
-    <table>
-        <tr>
-            <th>Day</th>
-            <th>Person</th>
-        </tr>
-        <% createdPlan.forEach( el => { %>
-        <tr class="<%= [0, 6].includes(new Date(selectedYear, selectedMonth - 1, el.day).getDay()) ? 'weekendDay' : '' %>">
-            <td><%= el.day %></td>
-            <td><%= el.personName %></td>
-        </tr>
-        <% }) %>
-    </table>
+            <div class="createdPlanLayout">
+                <table class="createdPlanTable">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Person</th>
+                        </tr>
+                    </thead>
+                    <tbody id="createdPlanRows">
+                    <% createdPlan.forEach( el => { %>
+                        <tr class="<%= ([0, 6].includes(new Date(selectedYear, selectedMonth - 1, el.day).getDay()) || customOffDays.includes(el.day)) ? 'weekendDay' : '' %>">
+                            <td><%= el.day %></td>
+                            <td><%= el.personName %></td>
+                        </tr>
+                    <% }) %>
+                    </tbody>
+                </table>
+
+                <div class="planNavigation">
+                    <% if (createdPlans.length > 1) { %>
+                        <button id="previousPlan" type="button" class="waves-effect waves-light btn-large" disabled>Show previous plan</button>
+                    <% } %>
+                    <p id="planNumber">Plan 1 of <%= createdPlans.length %></p>
+                    <% if (createdPlans.length > 1) { %>
+                        <button id="nextPlan" type="button" class="waves-effect waves-light btn-large">Show next plan</button>
+                    <% } %>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const createdPlans = <%- JSON.stringify(createdPlans).replace(/</g, '\\u003c') %>;
+            const customOffDays = <%- JSON.stringify(customOffDays).replace(/</g, '\\u003c') %>;
+            const selectedMonth = <%= selectedMonth %>;
+            const selectedYear = <%= selectedYear %>;
+            const planRows = document.getElementById("createdPlanRows");
+            const planNumber = document.getElementById("planNumber");
+            const previousPlanButton = document.getElementById("previousPlan");
+            const nextPlanButton = document.getElementById("nextPlan");
+            let currentPlanIndex = 0;
+
+            const isWeekend = day => [0, 6].includes(new Date(selectedYear, selectedMonth - 1, day).getDay());
+            const isOffDay = day => isWeekend(day) || customOffDays.includes(day);
+            const renderPlan = plan => {
+                planRows.innerHTML = "";
+
+                plan.forEach(planDay => {
+                    const row = document.createElement("tr");
+                    const dayCell = document.createElement("td");
+                    const personCell = document.createElement("td");
+
+                    if (isOffDay(planDay.day)) {
+                        row.classList.add("weekendDay");
+                    }
+
+                    dayCell.textContent = planDay.day;
+                    personCell.textContent = planDay.personName;
+                    row.appendChild(dayCell);
+                    row.appendChild(personCell);
+                    planRows.appendChild(row);
+                });
+            };
+
+            const updatePlanControls = () => {
+                planNumber.textContent = "Plan " + (currentPlanIndex + 1) + " of " + createdPlans.length;
+
+                if (previousPlanButton) {
+                    previousPlanButton.disabled = currentPlanIndex === 0;
+                }
+
+                if (nextPlanButton) {
+                    nextPlanButton.disabled = currentPlanIndex >= createdPlans.length - 1;
+                }
+            };
+
+            if (previousPlanButton) {
+                previousPlanButton.addEventListener("click", () => {
+                    if (currentPlanIndex <= 0) {
+                        return;
+                    }
+
+                    currentPlanIndex--;
+                    renderPlan(createdPlans[currentPlanIndex]);
+                    updatePlanControls();
+                });
+            }
+
+            if (nextPlanButton) {
+                nextPlanButton.addEventListener("click", () => {
+                    if (currentPlanIndex >= createdPlans.length - 1) {
+                        return;
+                    }
+
+                    currentPlanIndex++;
+                    renderPlan(createdPlans[currentPlanIndex]);
+                    updatePlanControls();
+                });
+            }
+
+            updatePlanControls();
+        });
+    </script>
 
     <script src="js/main.js"></script>
 </body>

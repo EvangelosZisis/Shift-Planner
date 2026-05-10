@@ -14,6 +14,10 @@ const PersonsSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    daysOfOffDays: {
+        type: Number,
+        default: 0
+    },
     
 })
 

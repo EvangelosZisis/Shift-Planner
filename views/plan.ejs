@@ -42,34 +42,114 @@
                 <label for="offDays">Include Off Days</label>
                 <input type="checkbox" id="offDays" name="offDays">
 
+                <label for="allowConsecutiveShifts">Allow Consecutive Shifts</label>
+                <input type="checkbox" id="allowConsecutiveShifts" name="allowConsecutiveShifts">
+                
+                <div class="customOffDaysControls">
+                    <input type="number" id="newOffDay" placeholder="Add an off day" min="1" max="31">
+                    <button id="addOffDay" type="button">Add</button>
+                    <input type="number" id="removeOffDay" placeholder="Remove an off day" min="1" max="31">
+                    <button id="removeOffDayButton" type="button">Remove</button>
+                    <p id="customOffDaysList"></p>
+                </div>
+                
+
         <h2>Please enter Person's information</h2>
 
-        <h5 class="daysError">
+        <input type="text" id="personName" placeholder="Name" name='personName'> <input type="number" placeholder="Number of work days" name='daysOfWork'> <input type="number" id="daysOfOffDays" placeholder="Number of off days" name="daysOfOffDays">
+        <button name="addPerson" value="value" type="submit">Add Person</button>
+    </form>
+
+    <h5 class="daysError">
         <% if (locals.messages.errors) { %>
             <% messages.errors.forEach( el => { %>
                 <div class="alert alert-danger"><%= el.msg %></div>
             <% }) %>    
         <% } %>
-        </h5>
-        <input type="text" id="personName" placeholder="Name" name='personName'> <input type="number" placeholder="Days of work" name='daysOfWork'> 
-        <button name="addPerson" value="value" type="submit">Add Person</button>
-    </form>
+    </h5>
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const monthSelect = document.getElementById("month");
             const yearInput = document.getElementById("year");
             const offDaysCheckbox = document.getElementById("offDays");
+            const allowConsecutiveShiftsCheckbox = document.getElementById("allowConsecutiveShifts");
+            const daysOfOffDaysInput = document.getElementById("daysOfOffDays");
+            const newOffDayInput = document.getElementById("newOffDay");
+            const addOffDayButton = document.getElementById("addOffDay");
+            const removeOffDayInput = document.getElementById("removeOffDay");
+            const removeOffDayButton = document.getElementById("removeOffDayButton");
+            const customOffDaysList = document.getElementById("customOffDaysList");
             const getOffDaysStorageKey = () => "include-off-days-" + monthSelect.value + "-" + yearInput.value;
+            const getAllowConsecutiveShiftsStorageKey = () => "allow-consecutive-shifts-" + monthSelect.value + "-" + yearInput.value;
+            const getCustomOffDaysStorageKey = () => "custom-off-days-" + monthSelect.value + "-" + yearInput.value;
+            const getDaysInMonth = () => new Date(parseInt(yearInput.value), parseInt(monthSelect.value), 0).getDate();
+            const getCustomOffDays = () => JSON.parse(localStorage.getItem(getCustomOffDaysStorageKey())) || [];
+            const saveCustomOffDays = days => {
+                localStorage.setItem(getCustomOffDaysStorageKey(), JSON.stringify(days));
+            };
+            const updateCustomOffDaysList = () => {
+                const customOffDays = getCustomOffDays();
+                customOffDaysList.textContent = customOffDays.length
+                    ? "Extra off days: " + customOffDays.join(", ")
+                    : "";
+            };
+            const updateDaysOfOffDaysVisibility = () => {
+                daysOfOffDaysInput.hidden = !offDaysCheckbox.checked;
+            };
             const loadOffDays = () => {
                 offDaysCheckbox.checked = localStorage.getItem(getOffDaysStorageKey()) === "true";
+                updateDaysOfOffDaysVisibility();
+                updateCustomOffDaysList();
+            };
+            const loadAllowConsecutiveShifts = () => {
+                allowConsecutiveShiftsCheckbox.checked = localStorage.getItem(getAllowConsecutiveShiftsStorageKey()) === "true";
             };
 
             loadOffDays();
-            monthSelect.addEventListener("change", loadOffDays);
-            yearInput.addEventListener("change", loadOffDays);
+            loadAllowConsecutiveShifts();
+            monthSelect.addEventListener("change", () => {
+                loadOffDays();
+                loadAllowConsecutiveShifts();
+            });
+            yearInput.addEventListener("change", () => {
+                loadOffDays();
+                loadAllowConsecutiveShifts();
+            });
             offDaysCheckbox.addEventListener("change", () => {
                 localStorage.setItem(getOffDaysStorageKey(), offDaysCheckbox.checked);
+                updateDaysOfOffDaysVisibility();
+            });
+            allowConsecutiveShiftsCheckbox.addEventListener("change", () => {
+                localStorage.setItem(getAllowConsecutiveShiftsStorageKey(), allowConsecutiveShiftsCheckbox.checked);
+            });
+            addOffDayButton.addEventListener("click", () => {
+                const day = parseInt(newOffDayInput.value);
+                const daysInMonth = getDaysInMonth();
+
+                if (!Number.isInteger(day) || day < 1 || day > daysInMonth) {
+                    return;
+                }
+
+                const customOffDays = [...new Set([...getCustomOffDays(), day])].sort((a, b) => a - b);
+                saveCustomOffDays(customOffDays);
+                newOffDayInput.value = "";
+                updateCustomOffDaysList();
+                document.dispatchEvent(new CustomEvent("customoffdayschange"));
+            });
+            removeOffDayButton.addEventListener("click", () => {
+                const day = parseInt(removeOffDayInput.value);
+                const daysInMonth = getDaysInMonth();
+
+                if (!Number.isInteger(day) || day < 1 || day > daysInMonth) {
+                    return;
+                }
+
+                const customOffDays = getCustomOffDays().filter(offDay => offDay !== day);
+                saveCustomOffDays(customOffDays);
+                removeOffDayInput.value = "";
+                updateCustomOffDaysList();
+                document.dispatchEvent(new CustomEvent("customoffdayschange"));
             });
         });
     </script>
@@ -79,6 +159,8 @@
             <input type="hidden" id="planMonth" name="month" value="<%= selectedMonth %>">
             <input type="hidden" id="planYear" name="year" value="<%= selectedYear %>">
             <input type="hidden" id="planOffDays" name="offDays" value="">
+            <input type="hidden" id="planAllowConsecutiveShifts" name="allowConsecutiveShifts" value="">
+            <input type="hidden" id="planCustomOffDays" name="customOffDays" value="[]">
 
 
             <table>
@@ -94,7 +176,7 @@
 
             <% plan.forEach( el => { %>
             <tr class="personPlan" data-id='<%=el._id%>'>
-                <td class="myTd"><span id="del" class='del material-symbols-outlined'>delete</span><%= el.personName %></td>
+                <td class="myTd"><span id="del" class='del material-symbols-outlined'>delete</span>(<%= Number(el.daysOfWork || 0) - el.daysOfOffDays %> + <%= Number(el.daysOfOffDays || 0) %>) <%= el.personName %></td>
                 <% for (let i = 1; i <= daysInMonth; i++) { %>
                 <td class="<%= [0, 6].includes(new Date(selectedYear, selectedMonth - 1, i).getDay()) ? 'weekendDay' : '' %>">
                     <input type="checkbox" name="unavailableDays[<%= el._id %>][]" class="persist-checkbox" data-person="<%= el._id %>" data-day="<%= i %>" value ="<%= i %>">
@@ -117,14 +199,33 @@
                 const planMonthInput = document.getElementById("planMonth");
                 const planYearInput = document.getElementById("planYear");
                 const offDaysCheckbox = document.getElementById("offDays");
+                const allowConsecutiveShiftsCheckbox = document.getElementById("allowConsecutiveShifts");
                 const planOffDaysInput = document.getElementById("planOffDays");
+                const planAllowConsecutiveShiftsInput = document.getElementById("planAllowConsecutiveShifts");
+                const planCustomOffDaysInput = document.getElementById("planCustomOffDays");
                 const table = document.querySelector("form[action='/plan/createdPlan'] table");
                 const createMyPlanButton = document.getElementById("createMyPlan");
                 const createPlanStatus = document.getElementById("createPlanStatus");
                 const totalDaysOfWork = <%= plan.reduce((total, person) => total + Number(person.daysOfWork || 0), 0) %>;
+                const totalDaysOfOffDays = <%= plan.reduce((total, person) => total + Number(person.daysOfOffDays || 0), 0) %>;
 
                 const getDaysInMonth = () => new Date(parseInt(yearInput.value), parseInt(monthSelect.value), 0).getDate();
                 const isWeekend = day => [0, 6].includes(new Date(parseInt(yearInput.value), parseInt(monthSelect.value) - 1, day).getDay());
+                const getCustomOffDaysStorageKey = () => "custom-off-days-" + monthSelect.value + "-" + yearInput.value;
+                const getCustomOffDays = () => JSON.parse(localStorage.getItem(getCustomOffDaysStorageKey())) || [];
+                const isOffDay = day => isWeekend(day) || getCustomOffDays().includes(day);
+                const getOffDaysCount = () => {
+                    const daysInMonth = getDaysInMonth();
+                    let offDays = 0;
+
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        if (isOffDay(day)) {
+                            offDays++;
+                        }
+                    }
+
+                    return offDays;
+                };
                 const getPlanDaysCount = () => {
                     const daysInMonth = getDaysInMonth();
 
@@ -134,7 +235,7 @@
 
                     let weekdays = 0;
                     for (let day = 1; day <= daysInMonth; day++) {
-                        if (!isWeekend(day)) {
+                        if (!isOffDay(day)) {
                             weekdays++;
                         }
                     }
@@ -144,22 +245,38 @@
                 const getStorageKey = personId => "person-" + personId + "-" + monthSelect.value + "-" + yearInput.value;
                 const updateCreatePlanButton = () => {
                     const planDaysCount = getPlanDaysCount();
-                    const canCreatePlan = totalDaysOfWork === planDaysCount;
+                    const offDaysCount = getOffDaysCount();
+                    const workDaysMatch = totalDaysOfWork === planDaysCount;
+                    const offDaysMatch = !offDaysCheckbox.checked || totalDaysOfOffDays === offDaysCount;
+                    const canCreatePlan = workDaysMatch && offDaysMatch;
+                    const statusMessages = [];
+
+                    if (!workDaysMatch) {
+                        statusMessages.push("Total days of work must equal " + planDaysCount + ". Current total: " + totalDaysOfWork + ".");
+                    }
+
+                    if (!offDaysMatch) {
+                        statusMessages.push("Total off days must equal " + offDaysCount + ". Current total: " + totalDaysOfOffDays + ".");
+                    }
 
                     planOffDaysInput.value = offDaysCheckbox.checked ? "on" : "";
+                    planAllowConsecutiveShiftsInput.value = allowConsecutiveShiftsCheckbox.checked ? "on" : "";
+                    planCustomOffDaysInput.value = JSON.stringify(getCustomOffDays());
 
                     createMyPlanButton.disabled = !canCreatePlan;
-                    createPlanStatus.textContent = canCreatePlan
-                        ? ""
-                        : "Total days of work must equal " + planDaysCount + ". Current total: " + totalDaysOfWork + ".";
+                    createPlanStatus.innerHTML = statusMessages.join("<br>");
                 };
 
                 const setupCheckbox = cb => {
                     const personId = cb.dataset.person;
                     const dayIndex = parseInt(cb.dataset.day);
                     let data = JSON.parse(localStorage.getItem(getStorageKey(personId))) || Array(getDaysInMonth()).fill(false);
+                    const updateCellColor = () => {
+                        cb.parentElement.classList.toggle("checkedUnavailableDay", cb.checked);
+                    };
 
                     cb.checked = data[dayIndex - 1] || false;
+                    updateCellColor();
 
                     cb.addEventListener("change", () => {
                         let updatedData = JSON.parse(localStorage.getItem(getStorageKey(personId))) || Array(getDaysInMonth()).fill(false);
@@ -167,6 +284,7 @@
                         updatedData[dayIndex - 1] = cb.checked;
 
                         localStorage.setItem(getStorageKey(personId), JSON.stringify(updatedData));
+                        updateCellColor();
                     });
                 };
 
@@ -180,6 +298,7 @@
                     const headerRow = table.querySelector("tr");
                     planMonthInput.value = monthSelect.value;
                     planYearInput.value = yearInput.value;
+                    planCustomOffDaysInput.value = JSON.stringify(getCustomOffDays());
 
                     if (!headerRow) {
                         return;
@@ -192,7 +311,7 @@
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dayCell = document.createElement("td");
                     dayCell.textContent = day;
-                    if (isWeekend(day)) {
+                    if (isOffDay(day)) {
                         dayCell.classList.add("weekendDay");
                     }
                     headerRow.appendChild(dayCell);
@@ -207,20 +326,23 @@
 
                     for (let day = 1; day <= daysInMonth; day++) {
                         const cell = document.createElement("td");
-                        const checkbox = document.createElement("input");
+                        const offDay = isOffDay(day);
 
-                        if (isWeekend(day)) {
+                        if (offDay) {
                             cell.classList.add("weekendDay");
                         }
 
-                        checkbox.type = "checkbox";
-                        checkbox.name = "unavailableDays[" + personId + "][]";
-                        checkbox.className = "persist-checkbox";
-                        checkbox.dataset.person = personId;
-                        checkbox.dataset.day = day;
-                        checkbox.value = day;
+                        if (offDaysCheckbox.checked || !offDay) {
+                            const checkbox = document.createElement("input");
+                            checkbox.type = "checkbox";
+                            checkbox.name = "unavailableDays[" + personId + "][]";
+                            checkbox.className = "persist-checkbox";
+                            checkbox.dataset.person = personId;
+                            checkbox.dataset.day = day;
+                            checkbox.value = day;
 
-                        cell.appendChild(checkbox);
+                            cell.appendChild(checkbox);
+                        }
                         row.appendChild(cell);
                     }
                     });
@@ -229,11 +351,12 @@
                     updateCreatePlanButton();
                 };
 
-                setupCheckboxes();
-                updateCreatePlanButton();
+                updateDays();
                 monthSelect.addEventListener("change", updateDays);
                 yearInput.addEventListener("change", updateDays);
-                offDaysCheckbox.addEventListener("change", updateCreatePlanButton);
+                offDaysCheckbox.addEventListener("change", updateDays);
+                allowConsecutiveShiftsCheckbox.addEventListener("change", updateCreatePlanButton);
+                document.addEventListener("customoffdayschange", updateDays);
             });
         </script>
     <% } else { %>
