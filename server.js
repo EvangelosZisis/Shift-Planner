@@ -10,6 +10,7 @@ const path = require('path')
 const connectDB = require('./config/database')
 const mainRoutes = require('./routes/main')
 const planRoutes = require('./routes/plan')
+const { ensureAuth } = require('./middleware/auth')
 
 require('dotenv').config({path: './config/.env'})
 
@@ -41,6 +42,10 @@ app.use(flash())
   
 app.use('/', mainRoutes)
 app.use('/api/plan', planRoutes)
+
+app.get(['/plan', '/created-plan'], ensureAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'))
+})
 
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'))

@@ -387,6 +387,8 @@ function PlanPage() {
 }
 
 function CreatedPlanPage() {
+    const [sessionUser, setSessionUser] = React.useState(null)
+    const [isCheckingSession, setIsCheckingSession] = React.useState(true)
     let saved = null
     try {
         saved = JSON.parse(sessionStorage.getItem('created-plan'))
@@ -394,6 +396,37 @@ function CreatedPlanPage() {
         saved = null
     }
     const [index, setIndex] = React.useState(0)
+
+    React.useEffect(() => {
+        let isMounted = true
+
+        api('/api/session')
+            .then(session => {
+                if (!isMounted) return
+
+                if (!session.user) {
+                    sessionStorage.removeItem('created-plan')
+                    navigate('/')
+                    return
+                }
+
+                setSessionUser(session.user)
+                setIsCheckingSession(false)
+            })
+            .catch(() => {
+                if (!isMounted) return
+                sessionStorage.removeItem('created-plan')
+                navigate('/')
+            })
+
+        return () => {
+            isMounted = false
+        }
+    }, [])
+
+    if (isCheckingSession) {
+        return h('p', { className: 'loadingState' }, 'Loading...')
+    }
 
     if (!saved) {
         return h('main', { className: 'pageShell' },
@@ -408,7 +441,7 @@ function CreatedPlanPage() {
 
     return h(React.Fragment, null,
         h(Header, {
-            user: saved.user,
+            user: sessionUser,
             leadingAction: h('button', { type: 'button', className: 'headerNavButton', onClick: () => navigate('/plan') }, 'Back to planner')
         }),
         h('main', { className: 'pageShell' },
