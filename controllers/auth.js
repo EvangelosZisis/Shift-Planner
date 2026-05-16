@@ -3,36 +3,24 @@ const validator = require('validator')
 const User = require('../models/User')
  
 
- exports.getLogin = (req, res) => {
-    if (req.user) {
-      return res.redirect('/plan')
-    }
-    res.render('login', {
-      title: 'Login'
-    })
-  }
-  
   exports.postLogin = (req, res, next) => {
     const validationErrors = []
     if (!validator.isEmail(req.body.email)) validationErrors.push({ msg: 'Please enter a valid email address.' })
     if (validator.isEmpty(req.body.password)) validationErrors.push({ msg: 'Password cannot be blank.' })
   
     if (validationErrors.length) {
-      req.flash('errors', validationErrors)
-      return res.redirect('/login')
+      return res.status(400).json({ errors: validationErrors })
     }
     req.body.email = validator.normalizeEmail(req.body.email, { gmail_remove_dots: false })
   
     passport.authenticate('local', (err, user, info) => {
       if (err) { return next(err) }
       if (!user) {
-        req.flash('errors', info)
-        return res.redirect('/login')
+        return res.status(401).json({ errors: [info] })
       }
       req.logIn(user, (err) => {
         if (err) { return next(err) }
-        req.flash('success', { msg: 'Success! You are logged in.' })
-        res.redirect(req.session.returnTo || '/plan')
+        res.json({ redirect: req.session.returnTo || '/plan' })
       })
     })(req, res, next)
   }
@@ -56,15 +44,6 @@ const User = require('../models/User')
     })
   }
   
-  exports.getSignup = (req, res) => {
-    if (req.user) {
-      return res.redirect('/plan')
-    }
-    res.render('signup', {
-      title: 'Create Account'
-    })
-  }
-  
   exports.postSignup = (req, res, next) => {
     const validationErrors = []
     if (!validator.isEmail(req.body.email)) validationErrors.push({ msg: 'Please enter a valid email address.' })
@@ -72,8 +51,7 @@ const User = require('../models/User')
     if (req.body.password !== req.body.confirmPassword) validationErrors.push({ msg: 'Passwords do not match' })
   
     if (validationErrors.length) {
-      req.flash('errors', validationErrors)
-      return res.redirect('../signup')
+      return res.status(400).json({ errors: validationErrors })
     }
     req.body.email = validator.normalizeEmail(req.body.email, { gmail_remove_dots: false })
   
@@ -89,8 +67,7 @@ const User = require('../models/User')
     ]}, (err, existingUser) => {
       if (err) { return next(err) }
       if (existingUser) {
-        req.flash('errors', { msg: 'Account with that email address or username already exists.' })
-        return res.redirect('../signup')
+        return res.status(409).json({ errors: [{ msg: 'Account with that email address or username already exists.' }] })
       }
       user.save((err) => {
         if (err) { return next(err) }
@@ -98,7 +75,7 @@ const User = require('../models/User')
           if (err) {
             return next(err)
           }
-          res.redirect('/plan')
+          res.json({ redirect: '/plan' })
         })
       })
     })

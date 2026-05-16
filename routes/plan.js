@@ -5,10 +5,10 @@ const { ensureAuth } = require('../middleware/auth')
 
 router.get('/', ensureAuth, planController.getPlan)
 
-router.post('/addPerson', planController.addPerson)
+router.post('/addPerson', ensureAuth, planController.addPerson)
 
-router.delete('/deletePerson', planController.deletePerson)
+router.delete('/deletePerson', ensureAuth, planController.deletePerson)
 
-router.post('/createdPlan', planController.createdPlan)
+router.post('/createdPlan', ensureAuth, planController.createdPlan)
 
 module.exports = router

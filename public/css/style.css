@@ -1,20 +1,105 @@
-
-.completed{
-    text-decoration: line-through;
-    color: rgb(134, 132, 132);
+* {
+  box-sizing: border-box;
 }
 
-.not{
-    text-decoration: underline;
+body {
+  margin: 0;
+  color: #171515;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f6f7f9;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button,
+.btn-large {
+  border: 0;
+  border-radius: 6px;
+  background: #171515;
+  color: white;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 18px;
+  text-decoration: none;
+}
+
+button:disabled,
+.btn-large:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+input,
+select {
+  border: 1px solid #c8cdd5;
+  border-radius: 6px;
+  min-height: 42px;
+  padding: 8px 10px;
+}
+
+.container {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 980px;
+  padding: 0 20px;
 }
 
 .login-container {
-  margin-top: 200px;
-  text-align: center;  
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+}
+
+.card,
+.panel {
+  background: white;
+  border: 1px solid #e0e4ea;
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+}
+
+.authCard {
+  max-width: 620px;
+  padding: 44px;
+  width: 100%;
+}
+
+.authActions {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin: 28px 0;
+}
+
+.authForm {
+  display: grid;
+  gap: 14px;
+  margin: 24px auto 0;
+  max-width: 420px;
+}
+
+.helper-text {
+  color: #555f6d;
+  text-align: left;
+}
+
+.googleButton {
+  background: #d63b30;
+  gap: 8px;
 }
 
 .or {
-    font-size: 45px;
+  font-size: 36px;
+  margin: 20px 0;
 }
 
 li {
@@ -26,82 +111,196 @@ li {
 .Welcome {
   color: white;
   font-size: 50px;
+  margin: 0;
 }
 
-header{
+header {
+  align-items: center;
+  background-color: #171515;
   display: flex;
   justify-content: space-between;
-  align-items: center;
   padding: 30px 10%;
-  background-color: #171515;
 }
 
 .nav_links {
   list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.nav_links li{
+.nav_links li {
   display: inline-block;
 }
 
 .nav_links li a {
-  text-decoration: none;
   color: white;
+  text-decoration: none;
   transition: all 0.3s ease 0s;
 }
 
-.nav_links li a:hover {
+.headerNavButton {
+  background: none;
+  border: 0;
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  transition: all 0.3s ease 0s;
+}
+
+.nav_links li a:hover,
+.headerNavButton:hover {
   color: #0088a9;
 }
 
-table, tr, th ,td{
-  border-collapse: collapse;
-  border: solid 1px black;
-  text-align: center;
-  text-decoration: none;
-  
-}
-table {
-    width: 100%;
+.pageShell {
+  margin: 0 auto;
+  max-width: 1400px;
+  padding: 24px;
 }
 
-.createdPlanTable {
-    width: 50%;
-}
-
-.createdPlanPanel .sectionHeader {
-  text-align: center;
-  font-size: large;
-}
-
-.createdPlanLayout {
-  display: flex;
-  align-items: center;
-  gap: 40px;
+.panel {
+  padding: 20px;
 }
 
 .personForm {
-    margin-bottom: 30px;
+  display: grid;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.monthPicker {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+
+.checkboxLabel {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.customOffDaysControls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.customOffDaysControls input {
+  width: 180px;
+}
+
+#customOffDaysList {
+  margin: 0;
+}
+
+.tableScroll {
+  overflow-x: visible;
+  width: 100%;
+}
+
+table,
+tr,
+th,
+td {
+  border: solid 1px black;
+  border-collapse: collapse;
+  text-align: center;
+  text-decoration: none;
+}
+
+table {
+  background: white;
+  width: 100%;
+}
+
+th,
+td {
+  min-width: 42px;
+  padding: 6px;
+}
+
+.plannerTable {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.plannerTable .personNameColumn {
+  width: clamp(120px, 18vw, 220px);
+}
+
+.plannerTable .dayColumn {
+  width: calc((100% - clamp(120px, 18vw, 220px)) / var(--days));
+}
+
+.plannerTable th,
+.plannerTable td {
+  font-size: 12px;
+  line-height: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 3px 1px;
+  text-overflow: clip;
+}
+
+.plannerTable .myTd {
+  font-size: 13px;
+  line-height: 1.2;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding-right: 4px;
+}
+
+.plannerTable .persist-checkbox {
+  height: 12px;
+  margin: 0;
+  width: 12px;
+}
+
+.createdPlanTable {
+  width: 50%;
+}
+
+.createdPlanPanel .sectionHeader {
+  font-size: large;
+  text-align: center;
+}
+
+.createdPlanLayout {
+  align-items: center;
+  display: flex;
+  gap: 40px;
 }
 
 .myTd {
-   text-align: right;
-   padding-right: 2%;
+  min-width: 220px;
+  padding-right: 2%;
+  text-align: right;
 }
 
-.del{
+.del {
+  background: transparent;
+  color: rgb(180, 37, 37);
   float: left;
   margin-left: 2%;
-  color: rgb(180, 37, 37);
-}
-.daysError {
-  color: red;
-  font-size: 20px;
+  min-height: 0;
+  padding: 0;
 }
 
-#noPeople {  
-    font-size: 25px;
-    border-color: transparent;
+.daysError {
+  color: #b42318;
+  font-size: 20px;
+  margin: 12px 0;
+}
+
+#noPeople {
+  border-color: transparent;
+  font-size: 25px;
 }
 
 .weekendDay {
@@ -112,34 +311,9 @@ table {
   margin-top: 20px;
 }
 
-#createMyPlan{
-  padding: 10px;
-}
-
-.monthPicker{
-  margin: 20px 0px;
-}
-
 .persist-checkbox {
   accent-color: black;
-}
-
-
-
-#newOffDay,
-#removeOffDay{
-  margin: 1% 0px;
-  width: 160px;
-}
-
-.customOffDaysControls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-#customOffDaysList {
-  margin: 0;
+  min-height: auto;
 }
 
 .checkedUnavailableDay {
@@ -147,24 +321,74 @@ table {
 }
 
 .planNavigation {
+  align-items: center;
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 10px;
   margin: 10%;
 }
 
 .planNavigation p {
-  margin: 0;
   font-size: 20px;
+  margin: 0;
 }
 
-#previousBestPlan,
-#nextBestPlan{
-  margin: 0;
+.secondaryButton {
+  background: #555f6d;
+}
+
+.loadingState {
+  font-size: 24px;
+  padding: 24px;
 }
 
 @media (max-width: 800px) {
+  .pageShell {
+    padding: 10px;
+  }
+
+  header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .Welcome {
+    font-size: 28px;
+  }
+
+  .plannerTable .personNameColumn {
+    width: 96px;
+  }
+
+  .plannerTable .dayColumn {
+    width: calc((100% - 96px) / var(--days));
+  }
+
+  .plannerTable th,
+  .plannerTable td {
+    font-size: 9px;
+    padding: 2px 0;
+  }
+
+  .plannerTable .myTd {
+    font-size: 10px;
+    padding-right: 2px;
+  }
+
+  .plannerTable .persist-checkbox {
+    height: 9px;
+    width: 9px;
+  }
+
+  .authCard {
+    padding: 28px 20px;
+  }
+
+  .authActions {
+    flex-direction: column;
+  }
+
   .createdPlanTable {
     width: 100%;
   }
@@ -176,6 +400,6 @@ table {
 
   .planNavigation {
     align-items: flex-start;
-    margin: 20px 0px;
+    margin: 20px 0;
   }
 }

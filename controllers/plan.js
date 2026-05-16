@@ -1,6 +1,9 @@
 const Persons = require('../models/Persons')
 const validator = require('validator')
 
+const valueToString = value => value === undefined || value === null ? '' : String(value)
+const isIntValue = (value, options) => validator.isInt(valueToString(value), options)
+const isEmptyValue = value => validator.isEmpty(valueToString(value))
 const getDaysInMonth = (month, year) => new Date(year, month, 0).getDate()
 const isWeekend = (day, month, year) => [0, 6].includes(new Date(year, month - 1, day).getDay())
 const parseCustomOffDays = (customOffDays, month, year) => {
@@ -142,7 +145,7 @@ const daysInMonthForSpacing = (month, year, includeOffDays, customOffDays = []) 
 const createRandomizedPlan = (people, unavailableDays, selectedMonth, selectedYear, includeOffDays, allowConsecutiveShifts, customOffDays) => {
     const daysInMonth = getDaysInMonth(selectedMonth, selectedYear)
     const attempts = 1500
-    const maxPlans = 11
+    const maxPlans = 10
     const bestPlans = []
 
     for (let attempt = 0; attempt < attempts; attempt++) {
@@ -294,7 +297,18 @@ module.exports = {
             const selectedMonth = today.getMonth() + 1
             const selectedYear = today.getFullYear()
             const daysInMonth = getDaysInMonth(selectedMonth, selectedYear)
-            res.render('plan.ejs', {plan: personName, user: req.user, req: req, selectedMonth, selectedYear, daysInMonth, monthNames})
+            res.json({
+                plan: personName,
+                user: {
+                    id: req.user.id,
+                    userName: req.user.userName,
+                    displayName: req.user.displayName
+                },
+                selectedMonth,
+                selectedYear,
+                daysInMonth,
+                monthNames
+            })
             
             
         }catch(err){
@@ -308,13 +322,12 @@ module.exports = {
         const daysOfOffDays = Number(req.body.daysOfOffDays || 0)
         const totalScheduledDays = regularDaysOfWork + daysOfOffDays
 
-        if (!validator.isInt(req.body.daysOfWork, { min: 1, max: 31 })) validationErrors.push({ msg: 'Please enter a valid number of days.' })
-        if (req.body.daysOfOffDays && !validator.isInt(req.body.daysOfOffDays, { min: 0, max: 31 })) validationErrors.push({ msg: 'Please enter a valid number of off days.' })
+        if (!isIntValue(req.body.daysOfWork, { min: 1, max: 31 })) validationErrors.push({ msg: 'Please enter a valid number of days.' })
+        if (req.body.daysOfOffDays && !isIntValue(req.body.daysOfOffDays, { min: 0, max: 31 })) validationErrors.push({ msg: 'Please enter a valid number of off days.' })
         if (totalScheduledDays > 31) validationErrors.push({ msg: 'Work days plus off days cannot be greater than 31.' })
-        if (validator.isEmpty(req.body.personName)) validationErrors.push({ msg: 'Please enter a name.' })
+        if (isEmptyValue(req.body.personName)) validationErrors.push({ msg: 'Please enter a name.' })
         if (validationErrors.length) {
-            req.flash('errors', validationErrors)
-            return res.redirect('/plan')
+            return res.status(400).json({ errors: validationErrors })
         }
         try{
             req.session.myData = "value";
@@ -324,7 +337,7 @@ module.exports = {
                 daysOfWork: totalScheduledDays,
                 daysOfOffDays
             })
-            res.redirect('/plan')
+            res.status(201).json({ ok: true })
 
         }catch(err){
             console.log(err)
@@ -339,10 +352,10 @@ module.exports = {
         try{
             const personName = await Persons.find({userId:req.user.id})
             const unavailableDays = req.body.unavailableDays || {}
-            const selectedMonth = validator.isInt(req.body.month || '', { min: 1, max: 12 })
+            const selectedMonth = isIntValue(req.body.month, { min: 1, max: 12 })
                 ? Number(req.body.month)
                 : new Date().getMonth() + 1
-            const selectedYear = validator.isInt(req.body.year || '', { min: 1900, max: 3000 })
+            const selectedYear = isIntValue(req.body.year, { min: 1900, max: 3000 })
                 ? Number(req.body.year)
                 : new Date().getFullYear()
             const daysInMonth = getDaysInMonth(selectedMonth, selectedYear)
@@ -368,8 +381,7 @@ module.exports = {
             }
 
             if (validationErrors.length) {
-                req.flash('errors', validationErrors)
-                return res.redirect('/plan')
+                return res.status(400).json({ errors: validationErrors })
             }
 
             const createdPlans = createRandomizedPlan(
@@ -383,7 +395,19 @@ module.exports = {
             )
             const createdPlan = createdPlans[0] || []
 
-            res.render('createdPlan.ejs', {createdPlan, createdPlans, user: req.user, req: req, selectedMonth, selectedYear, customOffDays, monthName: monthNames[selectedMonth - 1]})
+            res.json({
+                createdPlan,
+                createdPlans,
+                user: {
+                    id: req.user.id,
+                    userName: req.user.userName,
+                    displayName: req.user.displayName
+                },
+                selectedMonth,
+                selectedYear,
+                customOffDays,
+                monthName: monthNames[selectedMonth - 1]
+            })
             
             
         }catch(err){
